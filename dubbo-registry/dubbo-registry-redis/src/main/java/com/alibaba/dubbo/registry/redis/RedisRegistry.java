@@ -213,18 +213,23 @@ public class RedisRegistry extends FailbackRegistry {
     }
 
     public boolean isAvailable() {
-        for (JedisPool jedisPool : jedisPools.values()) {
-            try {
-                Jedis jedis = jedisPool.getResource();
-                try {
-                	if (jedis.isConnected()) {
-                        return true; // 至少需单台机器可用
-                    }
-                } finally {
-                    jedisPool.returnResource(jedis);
-                }
-            } catch (Throwable t) {
-            }
+//        for (JedisPool jedisPool : jedisPools.values()) {
+//            try {
+//                Jedis jedis = jedisPool.getResource();
+//                try {
+//                	if (jedis.isConnected()) {
+//                        return true; // 至少需单台机器可用
+//                    }
+//                } finally {
+//                    jedisPool.returnResource(jedis);
+//                }
+//            } catch (Throwable t) {
+//            }
+//        }
+        // 此处不能通过获取连接来判断是否是available，因为一旦redis挂掉，获取连接将被挂住，必须通过内部的状态来判断
+        // add by Joe 2013-11-13
+        if (jedisPools.size() > 0) {
+            return true;
         }
         return false;
     }
