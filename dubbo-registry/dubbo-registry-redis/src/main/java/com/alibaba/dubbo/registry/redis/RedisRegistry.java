@@ -89,6 +89,7 @@ public class RedisRegistry extends FailbackRegistry {
         config.testOnBorrow = url.getParameter("test.on.borrow", true);
         config.testOnReturn = url.getParameter("test.on.return", false);
         config.testWhileIdle = url.getParameter("test.while.idle", false);
+        config.whenExhaustedAction = GenericObjectPool.WHEN_EXHAUSTED_FAIL;
         if (url.getParameter("max.idle", 0) > 0)
             config.maxIdle = url.getParameter("max.idle", 0);
         if (url.getParameter("min.idle", 0) > 0)
@@ -213,23 +214,18 @@ public class RedisRegistry extends FailbackRegistry {
     }
 
     public boolean isAvailable() {
-//        for (JedisPool jedisPool : jedisPools.values()) {
-//            try {
-//                Jedis jedis = jedisPool.getResource();
-//                try {
-//                	if (jedis.isConnected()) {
-//                        return true; // 至少需单台机器可用
-//                    }
-//                } finally {
-//                    jedisPool.returnResource(jedis);
-//                }
-//            } catch (Throwable t) {
-//            }
-//        }
-        // 此处不能通过获取连接来判断是否是available，因为一旦redis挂掉，获取连接将被挂住，必须通过内部的状态来判断
-        // add by Joe 2013-11-13
-        if (jedisPools.size() > 0) {
-            return true;
+        for (JedisPool jedisPool : jedisPools.values()) {
+            try {
+                Jedis jedis = jedisPool.getResource();
+                try {
+                	if (jedis.isConnected()) {
+                        return true; // 至少需单台机器可用
+                    }
+                } finally {
+                    jedisPool.returnResource(jedis);
+                }
+            } catch (Throwable t) {
+            }
         }
         return false;
     }
